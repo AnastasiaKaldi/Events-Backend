@@ -33,3 +33,44 @@ exports.joinEvent = async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+exports.getJoinedEvents = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `
+        SELECT events.* FROM events
+        JOIN event_attendees ON events.id = event_attendees.event_id
+        WHERE event_attendees.user_id = $1
+        `,
+      [userId]
+    );
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching joined events:", err);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+exports.leaveEvent = async (req, res) => {
+  const userId = req.user.id;
+  const eventId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM event_attendees WHERE user_id = $1 AND event_id = $2",
+      [userId, eventId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(400).json({ message: "You haven't joined this event" });
+    }
+
+    res.status(200).json({ message: "Left event" });
+  } catch (err) {
+    console.error("Error leaving event:", err);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
