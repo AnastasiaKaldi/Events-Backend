@@ -2,6 +2,9 @@ const pool = require("../models/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const ENV = process.env.NODE_ENV || "development";
+
+// Register a new user
 exports.registerUser = async (req, res) => {
   const { email, password, role } = req.body;
   const hashed = await bcrypt.hash(password, 10);
@@ -12,45 +15,76 @@ exports.registerUser = async (req, res) => {
   res.status(201).json({ message: "User registered" });
 };
 
+exports.getMe = (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: "Not authenticated" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ id: decoded.id, role: decoded.role });
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+// Login and set JWT as secure cookie
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("🧪 Login attempt:", email);
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
 
-    const user = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    if (!user.rows.length) {
-      console.log("❌ User not found");
+    if (!userResult.rows.length) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    console.log("🔐 Stored hash:", user.rows[0].password);
-    console.log("🔑 Password from request:", password);
-
-    const valid = await bcrypt.compare(password, user.rows[0].password);
+    const user = userResult.rows[0];
+    const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      console.log("❌ Password mismatch");
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
     if (!process.env.JWT_SECRET) {
-      console.log("❌ JWT secret not set");
-      return res.status(500).json({ message: "JWT secret not set" });
+      return res.status(500).json({ message: "JWT secret not configured" });
     }
 
-    console.log("✅ JWT_SECRET is:", process.env.JWT_SECRET);
-
     const token = jwt.sign(
-      { id: user.rows[0].id, role: user.rows[0].role },
-      process.env.JWT_SECRET
+      { id: user.id, role: user.role, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
     );
 
-    console.log("✅ Token generated:", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: ENV === "production",
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
 
-    res.json({ token });
+    res.json({ message: "Logged in successfully" });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Something went wrong" });
   }
+};
+
+// Verify current user from cookie
+exports.getCurrentUser = (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: "Not logged in" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ user: decoded });
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+// Logout by clearing the cookie
+exports.logoutUser = (req, res) => {
+  res.clearCookie("token");
+  res.json({ message: "Logged out" });
 };
