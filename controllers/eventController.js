@@ -1,17 +1,69 @@
 const pool = require("../models/db");
 
 exports.getEvents = async (req, res) => {
-  const result = await pool.query("SELECT * FROM events");
-  res.json(result.rows);
+  try {
+    const result = await pool.query("SELECT * FROM events");
+    const parsed = result.rows.map((event) => ({
+      ...event,
+      images: event.images || [],
+      tickets: event.tickets || [],
+    }));
+    res.json(parsed);
+  } catch (err) {
+    console.error("❌ Error fetching events:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 exports.createEvent = async (req, res) => {
-  const { title, date, description } = req.body;
-  await pool.query(
-    "INSERT INTO events (title, date, description, created_by) VALUES ($1, $2, $3, $4)",
-    [title, date, description, req.user.id]
-  );
-  res.status(201).json({ message: "Event created" });
+  try {
+    const { title, summary, dateTime, location, overview, images, tickets } =
+      req.body;
+
+    if (
+      !title ||
+      !dateTime ||
+      !location ||
+      !Array.isArray(images) ||
+      !Array.isArray(tickets)
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const newEvent = {
+      created_by: req.user.id,
+      title,
+      summary,
+      dateTime,
+      location,
+      overview,
+      images,
+      tickets,
+    };
+
+    console.log("📦 New Event:", newEvent);
+
+    const result = await pool.query(
+      `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        req.user.id,
+        title,
+        summary,
+        dateTime,
+        location,
+        overview,
+        JSON.stringify(images),
+        JSON.stringify(tickets),
+      ]
+    );
+
+    res.status(201).json({ message: "Event created", event: result.rows[0] });
+  } catch (err) {
+    console.error("❌ Error creating event:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 exports.joinEvent = async (req, res) => {

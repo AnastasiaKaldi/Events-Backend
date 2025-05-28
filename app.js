@@ -26,10 +26,11 @@ app.use(cookieParser()); // 🔒 Parses cookies
 
 // ✅ Routes
 const authRoutes = require("./routes/authRoutes");
-const eventRoutes = require("./routes/eventRoutes");
+// const eventRoutes = require("./routes/eventRoutes");
+// console.log("✅ eventRoutes loaded");
 
 app.use("/api/auth", authRoutes);
-app.use("/api/events", eventRoutes);
+// app.use("/api/events", eventRoutes);
 
 // ✅ Test route
 app.post("/test-direct", (req, res) => {
@@ -40,3 +41,11 @@ app.post("/test-direct", (req, res) => {
 // ✅ Start
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection:", reason);
+});
