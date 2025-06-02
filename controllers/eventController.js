@@ -126,3 +126,48 @@ exports.leaveEvent = async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+// exports.getMyEvents = async (req, res) => {
+//   const staffId = req.user.id;
+
+//   try {
+//     const result = await pool.query(
+//       "SELECT * FROM events WHERE created_by = $1 ORDER BY datetime DESC",
+//       [staffId]
+//     );
+
+//     const parsed = result.rows.map((event) => ({
+//       ...event,
+//       images: event.images || [],
+//       tickets: event.tickets || [],
+//     }));
+
+//     res.status(200).json(parsed);
+//   } catch (err) {
+//     console.error("Error fetching staff events:", err);
+//     res.status(500).json({ message: "Something went wrong" });
+//   }
+// };
+
+// exports.deleteEvent = async (req, res) => {
+//   const userId = req.user.id;
+//   const eventId = req.params.id;
+
+//   try {
+//     const result = await pool.query(
+//       "DELETE FROM events WHERE id = $1 AND created_by = $2 RETURNING *",
+//       [eventId, userId]
+//     );
+
+//     if (result.rowCount === 0) {
+//       return res
+//         .status(403)
+//         .json({ message: "Not allowed to delete this event" });
+//     }
+
+//     res.status(200).json({ message: "Event deleted" });
+//   } catch (err) {
+//     console.error("❌ Error deleting event:", err);
+//     res.status(500).json({ message: "Something went wrong" });
+//   }
+// };

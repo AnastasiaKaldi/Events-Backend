@@ -26,11 +26,11 @@ app.use(cookieParser()); // 🔒 Parses cookies
 
 // ✅ Routes
 const authRoutes = require("./routes/authRoutes");
-// const eventRoutes = require("./routes/eventRoutes");
-// console.log("✅ eventRoutes loaded");
+const eventRoutes = require("./routes/eventRoutes");
+console.log("✅ eventRoutes loaded");
 
 app.use("/api/auth", authRoutes);
-// app.use("/api/events", eventRoutes);
+app.use("/api/events", eventRoutes);
 
 // ✅ Test route
 app.post("/test-direct", (req, res) => {
