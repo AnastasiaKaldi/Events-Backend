@@ -17,12 +17,12 @@ exports.getEvents = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
   try {
-    const { title, summary, dateTime, location, overview, images, tickets } =
+    const { title, summary, datetime, location, overview, images, tickets } =
       req.body;
 
     if (
       !title ||
-      !dateTime ||
+      !datetime ||
       !location ||
       !Array.isArray(images) ||
       !Array.isArray(tickets)
@@ -34,7 +34,7 @@ exports.createEvent = async (req, res) => {
       created_by: req.user.id,
       title,
       summary,
-      dateTime,
+      datetime,
       location,
       overview,
       images,
@@ -43,15 +43,26 @@ exports.createEvent = async (req, res) => {
 
     console.log("📦 New Event:", newEvent);
 
+    console.log("🧪 DB insert values:", [
+      req.user.id,
+      title,
+      summary,
+      datetime,
+      location,
+      overview,
+      JSON.stringify(images),
+      JSON.stringify(tickets),
+    ]);
+
     const result = await pool.query(
       `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   RETURNING *`,
       [
         req.user.id,
         title,
         summary,
-        dateTime,
+        datetime,
         location,
         overview,
         JSON.stringify(images),

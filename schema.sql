@@ -1,9 +1,7 @@
--- Drop tables in reverse order of dependencies
 DROP TABLE IF EXISTS event_attendees;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS users;
 
--- Recreate tables
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
