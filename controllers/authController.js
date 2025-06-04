@@ -28,7 +28,7 @@ exports.getMe = (req, res) => {
 };
 
 // Login and set JWT as secure cookie
-exports.login = async (req, res) => {
+exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const userResult = await pool.query(
