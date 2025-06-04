@@ -15,10 +15,74 @@ exports.getEvents = async (req, res) => {
   }
 };
 
+// exports.createEvent = async (req, res) => {
+//   try {
+//     const { title, summary, datetime, location, overview, images, tickets } =
+//       req.body;
+
+//     if (
+//       !title ||
+//       !datetime ||
+//       !location ||
+//       !Array.isArray(images) ||
+//       !Array.isArray(tickets)
+//     ) {
+//       return res.status(400).json({ message: "Missing required fields" });
+//     }
+
+//     const newEvent = {
+//       created_by: req.user.id,
+//       title,
+//       summary,
+//       datetime,
+//       location,
+//       overview,
+//       images,
+//       tickets,
+//     };
+
+//     console.log("📦 New Event:", newEvent);
+
+//     console.log("🧪 DB insert values:", [
+//       req.user.id,
+//       title,
+//       summary,
+//       datetime,
+//       location,
+//       overview,
+//       JSON.stringify(images),
+//       JSON.stringify(tickets),
+//     ]);
+
+//     const result = await pool.query(
+//       `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets)
+//    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+//    RETURNING *`,
+//       [
+//         req.user.id,
+//         title,
+//         summary,
+//         datetime,
+//         location,
+//         overview,
+//         JSON.stringify(images),
+//         JSON.stringify(tickets),
+//       ]
+//     );
+
+//     res.status(201).json({ message: "Event created", event: result.rows[0] });
+//   } catch (err) {
+//     console.error("❌ Error creating event:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.createEvent = async (req, res) => {
   try {
     const { title, summary, datetime, location, overview, images, tickets } =
       req.body;
+
+    console.log("📥 Payload received on backend:", req.body);
 
     if (
       !title ||
@@ -27,6 +91,7 @@ exports.createEvent = async (req, res) => {
       !Array.isArray(images) ||
       !Array.isArray(tickets)
     ) {
+      console.error("❌ Missing required fields");
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -41,23 +106,12 @@ exports.createEvent = async (req, res) => {
       tickets,
     };
 
-    console.log("📦 New Event:", newEvent);
-
-    console.log("🧪 DB insert values:", [
-      req.user.id,
-      title,
-      summary,
-      datetime,
-      location,
-      overview,
-      JSON.stringify(images),
-      JSON.stringify(tickets),
-    ]);
+    console.log("📦 Processed newEvent to insert:", newEvent);
 
     const result = await pool.query(
       `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-   RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
       [
         req.user.id,
         title,
@@ -70,6 +124,7 @@ exports.createEvent = async (req, res) => {
       ]
     );
 
+    console.log("✅ Event inserted into DB:", result.rows[0]);
     res.status(201).json({ message: "Event created", event: result.rows[0] });
   } catch (err) {
     console.error("❌ Error creating event:", err);
