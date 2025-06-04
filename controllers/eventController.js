@@ -193,27 +193,32 @@ exports.leaveEvent = async (req, res) => {
   }
 };
 
-// exports.getMyEvents = async (req, res) => {
-//   const staffId = req.user.id;
+exports.getEventById = async (req, res) => {
+  const eventId = req.params.id;
 
-//   try {
-//     const result = await pool.query(
-//       "SELECT * FROM events WHERE created_by = $1 ORDER BY datetime DESC",
-//       [staffId]
-//     );
+  try {
+    const result = await pool.query("SELECT * FROM events WHERE id = $1", [
+      eventId,
+    ]);
 
-//     const parsed = result.rows.map((event) => ({
-//       ...event,
-//       images: event.images || [],
-//       tickets: event.tickets || [],
-//     }));
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
+    }
 
-//     res.status(200).json(parsed);
-//   } catch (err) {
-//     console.error("Error fetching staff events:", err);
-//     res.status(500).json({ message: "Something went wrong" });
-//   }
-// };
+    const event = result.rows[0];
+
+    const parsedEvent = {
+      ...event,
+      images: event.images || [],
+      tickets: event.tickets || [],
+    };
+
+    res.status(200).json(parsedEvent);
+  } catch (err) {
+    console.error("❌ Error fetching event by ID:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // exports.deleteEvent = async (req, res) => {
 //   const userId = req.user.id;
