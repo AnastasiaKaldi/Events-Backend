@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 // ✅ Middleware
-const allowedOrigins = process.env.CLIENT_ORIGINS.split(",");
+const allowedOrigins = process.env.CLIENT_ORIGINS;
 
 app.use(
   cors({
