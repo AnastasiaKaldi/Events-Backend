@@ -1,15 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/authMiddleware");
-const { leaveEvent } = require("../controllers/eventController");
-
 const {
   getEvents,
   createEvent,
   joinEvent,
   getJoinedEvents,
-  // getMyEvents,
-  // deleteEvent,
+  leaveEvent,
+  getEventById,
 } = require("../controllers/eventController");
 
 router.get("/", getEvents);
@@ -17,7 +15,7 @@ router.post("/", auth, createEvent);
 router.post("/:id/join", auth, joinEvent);
 router.get("/joined", auth, getJoinedEvents);
 router.delete("/:id/join", auth, leaveEvent);
-router.get("/events/:id", eventController.getEventById);
+router.get("/events/:id", getEventById);
 
 // backend route example:
 router.get("/:id", async (req, res) => {
