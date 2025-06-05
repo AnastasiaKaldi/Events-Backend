@@ -17,6 +17,7 @@ router.post("/", auth, createEvent);
 router.post("/:id/join", auth, joinEvent);
 router.get("/joined", auth, getJoinedEvents);
 router.delete("/:id/join", auth, leaveEvent);
+router.get("/events/:id", eventController.getEventById);
 
 // backend route example:
 router.get("/:id", async (req, res) => {
