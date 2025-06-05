@@ -15,10 +15,7 @@ app.use((req, res, next) => {
 });
 
 // ✅ Middleware
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://eventino.netlify.app",
-];
+const allowedOrigins = process.env.CLIENT_ORIGINS.split(",");
 
 app.use(
   cors({
