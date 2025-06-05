@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const requireAuth = require("../middleware/requireAuth");
 const auth = require("../middleware/authMiddleware");
 const {
   getEvents,
@@ -12,25 +13,11 @@ const {
 
 router.get("/", getEvents);
 router.post("/", auth, createEvent);
+router.get("/joined", requireAuth, getJoinedEvents);
+router.get("/:id", getEventById);
 router.post("/:id/join", auth, joinEvent);
-router.get("/joined", auth, getJoinedEvents);
 router.delete("/:id/join", auth, leaveEvent);
-router.get("/events/:id", getEventById);
-
-// backend route example:
-router.get("/:id", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM events WHERE id = $1", [
-      req.params.id,
-    ]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Event not found" });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
+router.post("/:id/join", auth, joinEvent);
 
 // router.get("/mine", auth, getMyEvents);
 // router.delete("/:id", auth, deleteEvent);
