@@ -15,15 +15,16 @@ app.use((req, res, next) => {
 });
 
 // ✅ Middleware
-const allowedOrigins = process.env.CLIENT_ORIGINS;
+const allowedOrigins = [process.env.CLIENT_ORIGIN];
 
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS: " + origin));
       }
-      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
