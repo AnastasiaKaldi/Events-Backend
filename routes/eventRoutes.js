@@ -4,6 +4,7 @@ const requireAuth = require("../middleware/requireAuth");
 const auth = require("../middleware/authMiddleware");
 const {
   getEvents,
+  getMyEvents,
   createEvent,
   joinEvent,
   getJoinedEvents,
@@ -14,6 +15,7 @@ const {
 router.get("/", getEvents);
 router.post("/", auth, createEvent);
 router.get("/joined", requireAuth, getJoinedEvents);
+router.get("/mine", requireAuth, getMyEvents);
 router.get("/:id", getEventById);
 router.post("/:id/join", auth, joinEvent);
 router.delete("/:id/join", auth, leaveEvent);

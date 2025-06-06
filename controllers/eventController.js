@@ -167,6 +167,53 @@ exports.getEventById = async (req, res) => {
   }
 };
 
+exports.getMyEvents = async (req, res) => {
+  const userId = req.user.id;
+  console.log("🔍 Logged in user ID:", userId);
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM events WHERE created_by = $1 ORDER BY datetime DESC",
+      [userId]
+    );
+
+    console.log("📦 Raw rows from DB:", result.rows);
+
+    const events = result.rows.map((event) => {
+      let images = [];
+      let tickets = [];
+
+      try {
+        images = Array.isArray(event.images)
+          ? event.images
+          : JSON.parse(event.images || "[]");
+      } catch (e) {
+        console.error("❌ Failed to parse images:", event.images);
+      }
+
+      try {
+        tickets = Array.isArray(event.tickets)
+          ? event.tickets
+          : JSON.parse(event.tickets || "[]");
+      } catch (e) {
+        console.error("❌ Failed to parse tickets:", event.tickets);
+      }
+
+      return {
+        ...event,
+        images,
+        tickets,
+        image_url: images[0] || null, // ✅ Add this line
+      };
+    });
+
+    res.status(200).json(events);
+  } catch (err) {
+    console.error("❌ FINAL CATCH ERROR:", err.stack || err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 // module.exports = {
 //   getEvents,
 //   createEvent,
