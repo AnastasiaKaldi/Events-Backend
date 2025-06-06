@@ -19,37 +19,41 @@ require("dotenv").config({
   path: ENV === "production" ? ".env.production" : ".env",
 });
 
-const allowedOrigins = [process.env.CLIENT_ORIGINS];
+const allowedOrigins = process.env.CLIENT_ORIGINS.split(",");
 
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
 
-      const allowedOrigins = process.env.CLIENT_ORIGINS.split(",");
-      if (allowedOrigins.includes(origin)) {
+      if (
+        allowedOrigins.some(
+          (allowedOrigin) =>
+            origin === allowedOrigin ||
+            origin.endsWith(`.${new URL(allowedOrigin).hostname}`)
+        )
+      ) {
         return callback(null, true);
       }
 
-      const originDomain = new URL(origin).hostname;
-      const allowedDomains = allowedOrigins.map((url) => new URL(url).hostname);
-      if (allowedDomains.includes(originDomain)) {
-        return callback(null, true);
-      }
-
-      callback(new Error("Not allowed by CORS: " + origin));
+      callback(
+        new Error(
+          `Not allowed by CORS: ${origin}. Allowed: ${allowedOrigins.join(
+            ", "
+          )}`
+        )
+      );
     },
     credentials: true,
     exposedHeaders: ["set-cookie"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 
 app.use((req, res, next) => {
   if (ENV === "production") {
-    res.setHeader(
-      "Set-Cookie",
-      `session=value; Path=/; Secure; SameSite=None; HttpOnly`
-    );
+    res.header("Access-Control-Allow-Credentials", "true");
   }
   next();
 });
