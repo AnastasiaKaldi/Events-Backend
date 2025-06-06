@@ -27,15 +27,22 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-exports.getMe = (req, res) => {
-  const token = req.cookies.token;
-  if (!token) return res.status(401).json({ message: "Not authenticated" });
-
+exports.getMe = async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ id: decoded.id, role: decoded.role });
+    const { rows } = await pool.query(
+      "SELECT id, email, role, first_name FROM users WHERE id = $1",
+      [req.user.id]
+    );
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    console.error("Error in /api/auth/me:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
