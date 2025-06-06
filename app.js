@@ -19,7 +19,7 @@ require("dotenv").config({
   path: ENV === "production" ? ".env.production" : ".env",
 });
 
-const allowedOrigins = process.env.CLIENT_ORIGINS.split(",");
+const allowedOrigins = process.env.CLIENT_ORIGINS;
 
 app.use(
   cors({
