@@ -15,8 +15,13 @@ app.use((req, res, next) => {
   next();
 });
 
+const allowedOrigins = {
+  development: "http://localhost:5173",
+  production: "https://eventino.netlify.app",
+};
+
 const corsOptions = {
-  origin: "https://eventino.netlify.app",
+  origin: allowedOrigins[ENV],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
