@@ -24,15 +24,35 @@ const allowedOrigins = [process.env.CLIENT_ORIGINS];
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS: " + origin));
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = process.env.CLIENT_ORIGINS.split(",");
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
+
+      const originDomain = new URL(origin).hostname;
+      const allowedDomains = allowedOrigins.map((url) => new URL(url).hostname);
+      if (allowedDomains.includes(originDomain)) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by CORS: " + origin));
     },
     credentials: true,
+    exposedHeaders: ["set-cookie"],
   })
 );
+
+app.use((req, res, next) => {
+  if (ENV === "production") {
+    res.setHeader(
+      "Set-Cookie",
+      `session=value; Path=/; Secure; SameSite=None; HttpOnly`
+    );
+  }
+  next();
+});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
