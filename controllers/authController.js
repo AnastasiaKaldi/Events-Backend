@@ -6,13 +6,25 @@ const ENV = process.env.NODE_ENV || "development";
 
 // Register a new user
 exports.registerUser = async (req, res) => {
-  const { email, password, role } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
-  await pool.query(
-    "INSERT INTO users (email, password, role) VALUES ($1, $2, $3)",
-    [email, hashed, role]
-  );
-  res.status(201).json({ message: "User registered" });
+  const { email, password, first_name, last_name, role = "user" } = req.body;
+
+  if (!first_name || !last_name) {
+    return res
+      .status(400)
+      .json({ message: "First and last name are required" });
+  }
+
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO users (email, password, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5)",
+      [email, hashed, first_name, last_name, role]
+    );
+    res.status(201).json({ message: "User registered" });
+  } catch (err) {
+    console.error("Registration failed:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 exports.getMe = (req, res) => {

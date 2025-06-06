@@ -15,7 +15,11 @@ app.use((req, res, next) => {
 });
 
 // ✅ Middleware
-const allowedOrigins = [process.env.CLIENT_ORIGIN];
+require("dotenv").config({
+  path: ENV === "production" ? ".env.production" : ".env",
+});
+
+const allowedOrigins = [process.env.CLIENT_ORIGINS];
 
 app.use(
   cors({
