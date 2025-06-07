@@ -203,7 +203,7 @@ exports.getMyEvents = async (req, res) => {
         ...event,
         images,
         tickets,
-        image_url: images[0] || null, // ✅ Add this line
+        image_url: images[0] || null,
       };
     });
 
@@ -211,6 +211,40 @@ exports.getMyEvents = async (req, res) => {
   } catch (err) {
     console.error("❌ FINAL CATCH ERROR:", err.stack || err);
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+exports.deleteEvent = async (req, res) => {
+  const userId = req.user.id;
+  const userRole = req.user.role;
+  const eventId = req.params.id;
+
+  try {
+    const result = await pool.query("SELECT * FROM events WHERE id = $1", [
+      eventId,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const event = result.rows[0];
+
+    if (event.created_by !== userId && userRole !== "staff") {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this event" });
+    }
+
+    await pool.query("DELETE FROM event_attendees WHERE event_id = $1", [
+      eventId,
+    ]);
+    await pool.query("DELETE FROM events WHERE id = $1", [eventId]);
+
+    res.status(200).json({ message: "Event deleted successfully" });
+  } catch (err) {
+    console.error("❌ Error deleting event:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
