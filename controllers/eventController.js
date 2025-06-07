@@ -61,6 +61,7 @@ exports.createEvent = async (req, res) => {
     );
 
     console.log("✅ Event inserted into DB:", result.rows[0]);
+    console.log("Received category:", category);
     res.status(201).json({ message: "Event created", event: result.rows[0] });
   } catch (err) {
     console.error("❌ Error creating event:", err);
@@ -299,6 +300,7 @@ exports.updateEvent = async (req, res) => {
         eventId,
       ]
     );
+    console.log("Received category:", category);
 
     res.status(200).json({ message: "Event updated", event: updated.rows[0] });
   } catch (err) {
