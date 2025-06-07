@@ -248,6 +248,56 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
+exports.updateEvent = async (req, res) => {
+  const eventId = req.params.id;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  const { title, summary, datetime, location, overview, images, tickets } =
+    req.body;
+
+  try {
+    const result = await pool.query("SELECT * FROM events WHERE id = $1", [
+      eventId,
+    ]);
+    const event = result.rows[0];
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    if (event.created_by !== userId && userRole !== "staff") {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to edit this event" });
+    }
+
+    const updated = await pool.query(
+      `
+      UPDATE events
+      SET title = $1, summary = $2, datetime = $3, location = $4, overview = $5, images = $6, tickets = $7
+      WHERE id = $8
+      RETURNING *
+      `,
+      [
+        title,
+        summary,
+        datetime,
+        location,
+        overview,
+        JSON.stringify(images),
+        JSON.stringify(tickets),
+        eventId,
+      ]
+    );
+
+    res.status(200).json({ message: "Event updated", event: updated.rows[0] });
+  } catch (err) {
+    console.error("❌ Error updating event:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // module.exports = {
 //   getEvents,
 //   createEvent,

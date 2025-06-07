@@ -11,6 +11,7 @@ const {
   leaveEvent,
   getEventById,
   deleteEvent,
+  updateEvent,
 } = require("../controllers/eventController");
 
 router.get("/", getEvents);
@@ -19,6 +20,7 @@ router.get("/joined", requireAuth, getJoinedEvents);
 router.get("/mine", requireAuth, getMyEvents);
 router.post("/:id/join", auth, joinEvent);
 router.delete("/:id/join", auth, leaveEvent);
+router.put("/:id", requireAuth, updateEvent);
 router.delete("/:id", requireAuth, deleteEvent);
 router.get("/:id", getEventById);
 // router.get("/mine", auth, getMyEvents);
