@@ -17,8 +17,16 @@ exports.getEvents = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
   try {
-    const { title, summary, datetime, location, overview, images, tickets } =
-      req.body;
+    const {
+      title,
+      summary,
+      datetime,
+      location,
+      overview,
+      images,
+      tickets,
+      category,
+    } = req.body;
 
     console.log("📥 Payload received on backend:", req.body);
 
@@ -33,22 +41,11 @@ exports.createEvent = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const newEvent = {
-      created_by: req.user.id,
-      title,
-      summary,
-      datetime,
-      location,
-      overview,
-      images,
-      tickets,
-    };
-
-    console.log("📦 Processed newEvent to insert:", newEvent);
+    const normalizedCategory = (category || "custom").trim().toLowerCase();
 
     const result = await pool.query(
-      `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         req.user.id,
@@ -59,6 +56,7 @@ exports.createEvent = async (req, res) => {
         overview,
         JSON.stringify(images),
         JSON.stringify(tickets),
+        normalizedCategory,
       ]
     );
 
@@ -253,8 +251,16 @@ exports.updateEvent = async (req, res) => {
   const userId = req.user.id;
   const userRole = req.user.role;
 
-  const { title, summary, datetime, location, overview, images, tickets } =
-    req.body;
+  const {
+    title,
+    summary,
+    datetime,
+    location,
+    overview,
+    images,
+    tickets,
+    category,
+  } = req.body;
 
   try {
     const result = await pool.query("SELECT * FROM events WHERE id = $1", [
@@ -272,11 +278,13 @@ exports.updateEvent = async (req, res) => {
         .json({ message: "Not authorized to edit this event" });
     }
 
+    const normalizedCategory = (category || "custom").trim().toLowerCase();
+
     const updated = await pool.query(
       `
       UPDATE events
-      SET title = $1, summary = $2, datetime = $3, location = $4, overview = $5, images = $6, tickets = $7
-      WHERE id = $8
+      SET title = $1, summary = $2, datetime = $3, location = $4, overview = $5, images = $6, tickets = $7, category = $8
+      WHERE id = $9
       RETURNING *
       `,
       [
@@ -287,6 +295,7 @@ exports.updateEvent = async (req, res) => {
         overview,
         JSON.stringify(images),
         JSON.stringify(tickets),
+        normalizedCategory,
         eventId,
       ]
     );
