@@ -1,9 +1,9 @@
--- 💣 Drop existing tables (reverse dependency order)
+
 DROP TABLE IF EXISTS event_attendees;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS users;
 
--- 🧱 Create tables
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE event_attendees (
     UNIQUE (user_id, event_id)
 );
 
--- 👥 Seed staff and user
+
 INSERT INTO users (email, password, first_name, last_name, role)
 VALUES 
   ('staff@example.com', '$2b$10$2RKpJSRCS0dZz6zzJT5ntOSQnU4RxZcaJfus3KyxWWqcTopKxxaSu', 'Admin', 'User', 'staff'),

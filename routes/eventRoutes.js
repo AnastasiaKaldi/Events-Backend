@@ -23,7 +23,5 @@ router.post("/:id/leave", auth, leaveEvent);
 router.put("/:id", requireAuth, updateEvent);
 router.delete("/:id", requireAuth, deleteEvent);
 router.get("/:id", getEventById);
-// router.get("/mine", auth, getMyEvents);
-// router.delete("/:id", auth, deleteEvent);
 
 module.exports = router;

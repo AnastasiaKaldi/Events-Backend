@@ -7,14 +7,15 @@ const {
   getMe,
   logoutUser,
 } = require("../controllers/authController");
+
 const requireAuth = require("../middleware/requireAuth");
+const authenticate = require("../middleware/authMiddleware");
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/me", requireAuth, getMe);
+router.get("/me", authenticate, getMe);
 router.post("/logout", logoutUser);
 
-// Optional test route
 router.post("/test", (req, res) => {
   console.log("✅ /api/auth/test hit");
   res.json({ message: "Route is working" });

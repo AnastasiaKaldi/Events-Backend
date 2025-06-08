@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 
 const ENV = process.env.NODE_ENV || "development";
 
-// Register a new user
 exports.registerUser = async (req, res) => {
   const { email, password, first_name, last_name, role = "user" } = req.body;
 
@@ -27,26 +26,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-exports.getMe = async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      "SELECT id, email, role, first_name FROM users WHERE id = $1",
-      [req.user.id]
-    );
-    const user = rows[0];
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json(user);
-  } catch (err) {
-    console.error("Error in /api/auth/me:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// Login and set JWT as secure cookie
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -74,29 +53,36 @@ exports.loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      domain: ".eventino.com",
-      maxAge: 24 * 60 * 60 * 1000,
+
+    res.json({
+      message: "Logged in successfully",
+      token,
     });
-
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   sameSite: "None",
-    //   maxAge: 24 * 60 * 60 * 1000,
-    // });
-
-    res.json({ message: "Logged in successfully" });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
 
-// Verify current user from cookie
+exports.getMe = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, email, role, first_name FROM users WHERE id = $1",
+      [req.user.id]
+    );
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("Error in /api/auth/me:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.getCurrentUser = (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ message: "Not logged in" });
@@ -104,13 +90,11 @@ exports.getCurrentUser = (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     res.json({ user: decoded });
-    console.log("✅ Authenticated user:", decoded);
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
-// Logout by clearing the cookie
 exports.logoutUser = (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out" });
