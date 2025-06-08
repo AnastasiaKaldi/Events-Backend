@@ -23,8 +23,12 @@ CREATE TABLE events (
     overview TEXT,
     images JSONB,
     tickets JSONB,
+    capacity INTEGER NOT NULL DEFAULT 50,
+    status TEXT CHECK (status IN ('open', 'full')) DEFAULT 'open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
 
 CREATE TABLE event_attendees (
     id SERIAL PRIMARY KEY,

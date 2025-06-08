@@ -2,11 +2,12 @@ const pool = require("../models/db");
 
 exports.getEvents = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM events");
+    const result = await pool.query(
+      "SELECT * FROM events WHERE status = 'open'"
+    );
     const parsed = result.rows.map((event) => ({
       ...event,
       images: event.images || [],
-      tickets: event.tickets || [],
     }));
     res.json(parsed);
   } catch (err) {
@@ -24,29 +25,25 @@ exports.createEvent = async (req, res) => {
       location,
       overview,
       images,
-      tickets,
       category,
+      capacity,
     } = req.body;
-
-    console.log("📥 Payload received on backend:", req.body);
-    console.log("Received category:", category);
 
     if (
       !title ||
       !datetime ||
       !location ||
       !Array.isArray(images) ||
-      !Array.isArray(tickets)
+      capacity === undefined
     ) {
-      console.error("❌ Missing required fields");
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     const normalizedCategory = (category || "custom").trim().toLowerCase();
 
     const result = await pool.query(
-      `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, tickets, category)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO events (created_by, title, summary, datetime, location, overview, images, category, capacity, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
         req.user.id,
@@ -56,12 +53,11 @@ exports.createEvent = async (req, res) => {
         location,
         overview,
         JSON.stringify(images),
-        JSON.stringify(tickets),
         normalizedCategory,
+        capacity,
+        "open",
       ]
     );
-
-    console.log("✅ Event inserted into DB:", result.rows[0]);
 
     res.status(201).json({ message: "Event created", event: result.rows[0] });
   } catch (err) {
@@ -75,17 +71,46 @@ exports.joinEvent = async (req, res) => {
   const eventId = req.params.id;
 
   try {
+    const eventRes = await pool.query(
+      "SELECT capacity, status FROM events WHERE id = $1",
+      [eventId]
+    );
+    const attendeesRes = await pool.query(
+      "SELECT COUNT(*) FROM event_attendees WHERE event_id = $1",
+      [eventId]
+    );
+
+    if (eventRes.rows.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const { capacity, status } = eventRes.rows[0];
+    const currentCount = parseInt(attendeesRes.rows[0].count, 10);
+
+    if (status === "full" || currentCount >= capacity) {
+      return res.status(400).json({ message: "Event is already full" });
+    }
+
     await pool.query(
       "INSERT INTO event_attendees (user_id, event_id) VALUES ($1, $2)",
       [userId, eventId]
     );
-    res.status(200).json({ message: "Joined event" });
+
+    const isNowFull = currentCount + 1 === capacity;
+
+    if (isNowFull) {
+      await pool.query("UPDATE events SET status = 'full' WHERE id = $1", [
+        eventId,
+      ]);
+      console.log(`🔒 Event ${eventId} marked as FULL`);
+    }
+
+    res.status(200).json({ message: "Joined event", isNowFull });
   } catch (err) {
     if (err.code === "23505") {
-      // 23505 = unique_violation
       return res.status(400).json({ message: "You already joined this event" });
     }
-    console.error(err);
+    console.error("❌ joinEvent error:", err);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
@@ -157,7 +182,6 @@ exports.getEventById = async (req, res) => {
     const parsedEvent = {
       ...event,
       images: event.images || [],
-      tickets: event.tickets || [],
     };
 
     res.status(200).json(parsedEvent);
@@ -169,20 +193,22 @@ exports.getEventById = async (req, res) => {
 
 exports.getMyEvents = async (req, res) => {
   const userId = req.user.id;
-  console.log("🔍 Logged in user ID:", userId);
 
   try {
     const result = await pool.query(
-      "SELECT * FROM events WHERE created_by = $1 ORDER BY datetime DESC",
+      `
+  SELECT e.*, (
+    SELECT COUNT(*) FROM event_attendees ea WHERE ea.event_id = e.id
+  ) AS attendee_count
+  FROM events e
+  WHERE e.created_by = $1
+  ORDER BY datetime DESC
+  `,
       [userId]
     );
 
-    console.log("📦 Raw rows from DB:", result.rows);
-
     const events = result.rows.map((event) => {
       let images = [];
-      let tickets = [];
-
       try {
         images = Array.isArray(event.images)
           ? event.images
@@ -191,18 +217,9 @@ exports.getMyEvents = async (req, res) => {
         console.error("❌ Failed to parse images:", event.images);
       }
 
-      try {
-        tickets = Array.isArray(event.tickets)
-          ? event.tickets
-          : JSON.parse(event.tickets || "[]");
-      } catch (e) {
-        console.error("❌ Failed to parse tickets:", event.tickets);
-      }
-
       return {
         ...event,
         images,
-        tickets,
         image_url: images[0] || null,
       };
     });
@@ -260,11 +277,9 @@ exports.updateEvent = async (req, res) => {
     location,
     overview,
     images,
-    tickets,
     category,
+    capacity,
   } = req.body;
-
-  console.log("Received category:", category);
 
   try {
     const result = await pool.query("SELECT * FROM events WHERE id = $1", [
@@ -287,7 +302,7 @@ exports.updateEvent = async (req, res) => {
     const updated = await pool.query(
       `
       UPDATE events
-      SET title = $1, summary = $2, datetime = $3, location = $4, overview = $5, images = $6, tickets = $7, category = $8
+      SET title = $1, summary = $2, datetime = $3, location = $4, overview = $5, images = $6, category = $7, capacity = $8
       WHERE id = $9
       RETURNING *
       `,
@@ -298,8 +313,8 @@ exports.updateEvent = async (req, res) => {
         location,
         overview,
         JSON.stringify(images),
-        JSON.stringify(tickets),
         normalizedCategory,
+        capacity,
         eventId,
       ]
     );
@@ -310,12 +325,3 @@ exports.updateEvent = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-// module.exports = {
-//   getEvents,
-//   createEvent,
-//   joinEvent,
-//   getJoinedEvents,
-//   leaveEvent,
-//   getEventById,
-// };

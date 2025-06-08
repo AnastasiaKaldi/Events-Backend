@@ -7,7 +7,7 @@ const pool = new Pool({
 
 pool.query("SELECT current_database()", (err, res) => {
   if (err) {
-    console.error("❌ DB Error:", err);
+    console.error("❌ Could not connect to database:", err);
   } else {
     console.log("✅ Connected to DB:", res.rows[0].current_database);
   }
