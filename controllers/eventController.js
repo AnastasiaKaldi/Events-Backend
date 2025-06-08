@@ -102,7 +102,6 @@ exports.joinEvent = async (req, res) => {
       await pool.query("UPDATE events SET status = 'full' WHERE id = $1", [
         eventId,
       ]);
-      console.log(`🔒 Event ${eventId} marked as FULL`);
     }
 
     res.status(200).json({ message: "Joined event", isNowFull });

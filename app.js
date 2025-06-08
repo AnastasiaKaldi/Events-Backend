@@ -36,8 +36,6 @@ app.use(cookieParser());
 const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 
-console.log("✅ eventRoutes loaded");
-
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 
@@ -51,7 +49,6 @@ app.get("/test-cookie", (req, res) => {
 });
 
 app.post("/test-direct", (req, res) => {
-  console.log("✅ Reached /test-direct (real app)");
   res.json({ message: "Real app works now" });
 });
 

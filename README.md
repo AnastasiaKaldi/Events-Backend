@@ -56,29 +56,6 @@ Your server will start on http://localhost:5050
 
 INSERT INTO users (...) VALUES (...);
 
-## Project Structure
-
-controllers/
-├── authController.js # Handles login and registration logic
-├── eventController.js # Handles creating, updating, deleting, and joining events
-
-middleware/
-├── authMiddleware.js # Extracts user info from JWT stored in HTTP-only cookies
-├── requireAuth.js # Middleware to protect routes (ensures user is authenticated)
-
-models/
-├── db.js # Sets up and exports the PostgreSQL pool using 'pg'
-
-router/
-├── authRoutes.js # Defines routes for login and registration
-├── eventRoutes.js # Defines routes for event-related operations
-
-app.js # Sets up the Express app, applies middleware, mounts routes
-connection.js # Helper for setting up and testing raw DB connections
-generate-hash.js # CLI utility to hash passwords using bcrypt
-schema.sql # SQL schema: defines tables for users, events, attendees
-seed.sql # Seeds initial data (staff + user accounts for testing)
-
 ## User Roles
 
 user: can join events
@@ -86,7 +63,3 @@ user: can join events
 staff: can create, update, and delete events
 
 Role is stored in the users table and enforced via middleware.
-
-## Feedback
-
-Please feel free to submit pull requests or open issues. For questions, contact kaldianastasia@gmail.com

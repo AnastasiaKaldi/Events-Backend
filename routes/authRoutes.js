@@ -17,7 +17,6 @@ router.get("/me", authenticate, getMe);
 router.post("/logout", logoutUser);
 
 router.post("/test", (req, res) => {
-  console.log("✅ /api/auth/test hit");
   res.json({ message: "Route is working" });
 });
 
