@@ -1,8 +1,6 @@
-
 DROP TABLE IF EXISTS event_attendees;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS users;
-
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -10,7 +8,8 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role VARCHAR(10) CHECK (role IN ('user', 'staff')) NOT NULL
+    role VARCHAR(10) CHECK (role IN ('user', 'staff')) NOT NULL,
+    is_verified BOOLEAN DEFAULT TRUE 
 );
 
 CREATE TABLE events (
@@ -23,12 +22,11 @@ CREATE TABLE events (
     overview TEXT,
     images JSONB,
     tickets JSONB,
+    category VARCHAR(100),
     capacity INTEGER NOT NULL DEFAULT 50,
     status TEXT CHECK (status IN ('open', 'full')) DEFAULT 'open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
 
 CREATE TABLE event_attendees (
     id SERIAL PRIMARY KEY,
@@ -36,7 +34,6 @@ CREATE TABLE event_attendees (
     event_id INTEGER REFERENCES events(id),
     UNIQUE (user_id, event_id)
 );
-
 
 INSERT INTO users (email, password, first_name, last_name, role)
 VALUES 

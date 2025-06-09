@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const sendVerificationEmail = require("./routes/sendVerificationEmail");
 
 const ENV = process.env.NODE_ENV || "development";
 
@@ -32,9 +33,13 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
+app.use("/api/send-verification-email", sendVerificationEmail);
 
 const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
+
+const verifyRoutes = require("./routes/verifyRoutes");
+app.use("/api", verifyRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);

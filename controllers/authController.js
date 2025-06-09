@@ -1,4 +1,4 @@
-const pool = require("../models/db");
+const { pool } = require("../models/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -15,12 +15,20 @@ exports.registerUser = async (req, res) => {
 
   try {
     const hashed = await bcrypt.hash(password, 10);
-    await pool.query(
-      "INSERT INTO users (email, password, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5)",
+    const result = await pool.query(
+      "INSERT INTO users (email, password, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id",
       [email, hashed, first_name, last_name, role]
     );
-    res.status(201).json({ message: "User registered" });
+
+    const newUserId = result.rows[0].id;
+
+    res.status(201).json({ message: "User registered", id: newUserId });
   } catch (err) {
+    if (err.code === "23505") {
+      // Unique constraint violation (duplicate email)
+      return res.status(409).json({ message: "User already exists" });
+    }
+
     console.error("Registration failed:", err);
     res.status(500).json({ message: "Server error" });
   }
@@ -39,9 +47,17 @@ exports.loginUser = async (req, res) => {
     }
 
     const user = userResult.rows[0];
+
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // 🚫 Block login if email is not verified
+    if (!user.is_verified) {
+      return res.status(403).json({
+        message: "Please verify your email before logging in.",
+      });
     }
 
     if (!process.env.JWT_SECRET) {

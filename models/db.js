@@ -13,4 +13,18 @@ pool.query("SELECT current_database()", (err, res) => {
   }
 });
 
-module.exports = pool;
+async function getUserByEmail(email) {
+  const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+    email,
+  ]);
+  return result.rows[0];
+}
+
+async function markUserVerified(userId) {
+  return db.query("UPDATE users SET is_verified = 1 WHERE id = ?", [userId]);
+}
+
+module.exports = {
+  pool,
+  getUserByEmail,
+};

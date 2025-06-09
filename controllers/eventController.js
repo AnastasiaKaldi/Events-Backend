@@ -1,4 +1,4 @@
-const pool = require("../models/db");
+const { pool } = require("../models/db");
 
 exports.getEvents = async (req, res) => {
   try {
