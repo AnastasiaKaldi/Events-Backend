@@ -9,7 +9,7 @@ CREATE TABLE users (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     role VARCHAR(10) CHECK (role IN ('user', 'staff')) NOT NULL,
-    is_verified BOOLEAN DEFAULT TRUE 
+    is_verified BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE events (

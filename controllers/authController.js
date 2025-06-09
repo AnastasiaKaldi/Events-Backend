@@ -16,8 +16,8 @@ exports.registerUser = async (req, res) => {
   try {
     const hashed = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      "INSERT INTO users (email, password, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [email, hashed, first_name, last_name, role]
+      "INSERT INTO users (email, password, first_name, last_name, role, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+      [email, hashed, first_name, last_name, role, true]
     );
 
     const newUserId = result.rows[0].id;
@@ -54,11 +54,11 @@ exports.loginUser = async (req, res) => {
     }
 
     // 🚫 Block login if email is not verified
-    if (!user.is_verified) {
-      return res.status(403).json({
-        message: "Please verify your email before logging in.",
-      });
-    }
+    // if (!user.is_verified) {
+    //   return res.status(403).json({
+    //     message: "Please verify your email before logging in.",
+    //   });
+    // }
 
     if (!process.env.JWT_SECRET) {
       return res.status(500).json({ message: "JWT secret not configured" });
